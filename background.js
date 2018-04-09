@@ -1,4 +1,4 @@
-//TODO: Store and get variables
+//TODO: Store and get variables. Better way to check for url.
 var electrons=["netflix", "primevideo"];
 var protons=["codechef"];
 
@@ -50,9 +50,9 @@ function tick() {
         return;
     elapsed++;
     console.log(elapsed);
-    // chrome.storage.local.set({elapsed: elapsed}, function () {
-    //     console.log("Value is: "+elapsed);
-    // });
+    chrome.storage.local.set({elapsed: elapsed}, function () {
+        console.log("Local value is: "+elapsed);
+    });
 }
 
 function tock() {
@@ -60,6 +60,9 @@ function tock() {
 
     elapsed--;
     console.log(elapsed);
+    chrome.storage.local.set({elapsed: elapsed}, function () {
+        console.log("Local value is: "+elapsed);
+    });
 }
 
 function timer(url) {
@@ -110,6 +113,10 @@ chrome.windows.onFocusChanged.addListener(function (windowId) {
             timer(result[0].url);
             console.log("After window change: "+result[0].url);
         });
+    }
+    else {
+        clearInterval(id);
+        console.log("Windows Focus Lost");
     }
 });
 
