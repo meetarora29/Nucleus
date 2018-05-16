@@ -1,26 +1,47 @@
-//TODO: Store and get variables. Better way to check for url.
+//TODO: Minimize Condition. Better way to check for url.
 var electrons=["netflix", "primevideo"];
 var protons=["codechef"];
 
+// Interval ID
+var id=0;
+
 var elapsed=0;
-// chrome.storage.sync.clear();
-chrome.storage.sync.get(['elapsed'], function (result) {
-    console.log("Elapsed is: "+result.elapsed);
-    if(result.elapsed)
-        elapsed=result.elapsed;
-});
+
+var prev_date=new Date();
+console.log("S:" +prev_date);
 
 var minutes=1000;
 var limit=minutes*(60);
-chrome.storage.local.set({limit: limit}, function () {
-    console.log("Value is: "+limit);
+
+// chrome.storage.sync.clear();
+chrome.storage.sync.get(['elapsed', 'date', 'limit'], function (result) {
+    console.log("Synced Elapsed is: "+result.elapsed+" Date: "+result.date + " Limit: "+result.limit);
+    if(result.elapsed)
+        elapsed=result.elapsed;
+    if(result.date)
+        prev_date=new Date(result.date);
+    if (result.limit)
+        limit=result.limit;
+    console.log("C: "+prev_date);
 });
 
-var prev_date=new Date();
-prev_date.setHours(0, 0, 0, 0);
-console.log(prev_date);
+// Taking more recent values
+chrome.storage.local.get(['elapsed', 'date', 'limit'], function (result) {
+    console.log("Local Elapsed is: "+result.elapsed+" Date: "+result.date + " Limit: "+result.limit);
+    if (result.date)
+        result.date=new Date(result.date);
+    if(result.date > prev_date) {
+        prev_date=result.date;
+        if (result.limit)
+            limit=result.limit;
+        if (result.elapsed)
+            elapsed=result.elapsed;
+    }
+    console.log("L: "+result.date);
+    console.log("F:" +prev_date);
+});
 
-var id=0;
+sync_values(prev_date);
 
 function check_new_day() {
     var current_date=new Date();
@@ -89,6 +110,15 @@ function timer(url) {
     }
 }
 
+function sync_values(date) {
+    chrome.storage.sync.set({limit: limit, elapsed: elapsed, date: date.toString()}, function () {
+        console.log("Value Synced");
+    });
+    chrome.storage.local.set({limit: limit, elapsed: elapsed, date: date.toString()}, function () {
+        console.log("Local Values Set");
+    });
+}
+
 chrome.tabs.onActivated.addListener(function (activeInfo) {
     chrome.tabs.get(activeInfo.tabId, function (tab) {
         console.log("Tab Changed: "+tab.url);
@@ -109,21 +139,21 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo) {
 
 chrome.windows.onFocusChanged.addListener(function (windowId) {
     if (windowId!==chrome.windows.WINDOW_ID_NONE) {
+        sync_values(new Date());
+
         chrome.tabs.query({active:true, windowId: windowId}, function (result) {
             timer(result[0].url);
             console.log("After window change: "+result[0].url);
         });
     }
-    else {
-        clearInterval(id);
-        console.log("Windows Focus Lost");
-    }
+    // else {
+    //     clearInterval(id);
+    //     console.log("Windows Focus Lost");
+    // }
 });
 
 chrome.windows.onRemoved.addListener(function () {
-    chrome.storage.sync.set({limit: limit, elapsed: elapsed}, function () {
-        console.log("Value synced");
-    })
+    sync_values(new Date());
 });
 
 chrome.runtime.onInstalled.addListener(function () {
