@@ -2,9 +2,16 @@
   "name": "Nucleus",
   "version": "1.0",
   "description": "Website Blocker",
-  "permissions": ["storage", "declarativeContent", "tabs"],
+  "permissions": [
+    "storage",
+    "declarativeContent",
+    "tabs",
+    "alarms"
+  ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "background.js"
+    ],
     "persistent": false
   },
   "page_action": {
